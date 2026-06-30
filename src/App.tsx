@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const workoutDays = [
   {
@@ -7,7 +7,7 @@ const workoutDays = [
     title: "Push",
     subtitle: "Chest + Triceps",
     color: "#E84040",
-    time: "~60 min",
+    time: "~90 min",
     exercises: [
       {
         name: "Barbell Bench Press",
@@ -45,6 +45,24 @@ const workoutDays = [
         reps: "10–12",
         note: "Dumbbell or cable — finish triceps here",
       },
+      {
+        name: "Cable Lateral Raise",
+        sets: 3,
+        reps: "15",
+        note: "D-bar attachment · unilateral each side · side delt finisher to cap off the session",
+      },
+      {
+        name: "Chest Supported DB Row",
+        sets: 3,
+        reps: "10–12",
+        note: "Chest on incline bench · elbows drive back, full stretch at bottom · great back finisher on push day for balance",
+      },
+      {
+        name: "Romanian Deadlift",
+        sets: 3,
+        reps: "8–10",
+        note: "Second leg frequency hit — hinge at hips, soft knees · lighter than Day 4, focus on hamstring stretch · use lifting straps",
+      },
     ],
   },
   {
@@ -53,7 +71,7 @@ const workoutDays = [
     title: "Pull",
     subtitle: "Back + Biceps",
     color: "#2563EB",
-    time: "~80 min",
+    time: "~85 min",
     exercises: [
       {
         name: "Deadlift",
@@ -80,6 +98,12 @@ const workoutDays = [
         note: "Elbows tight · use lifting straps",
       },
       {
+        name: "Back Extension (Hyperextension)",
+        sets: 3,
+        reps: "12–15",
+        note: "45° or GHD bench · keep back neutral at top, don't hyperextend · can hold a plate for added resistance",
+      },
+      {
         name: "Face Pulls",
         sets: 3,
         reps: "15–20",
@@ -97,6 +121,7 @@ const workoutDays = [
         reps: "10–12",
         note: "Brachialis builder",
       },
+
     ],
   },
   {
@@ -105,19 +130,19 @@ const workoutDays = [
     title: "Shoulders + Arms",
     subtitle: "Delts + Bis + Tris",
     color: "#16A34A",
-    time: "~65 min",
+    time: "~80 min",
     exercises: [
       {
-        name: "Machine Shoulder Press",
+        name: "Incline DB Press",
+        sets: 3,
+        reps: "8–10",
+        note: "Chest warm-up / activation — light to moderate weight, full range of motion before pressing overhead",
+      },
+      {
+        name: "Overhead Shoulder Press",
         sets: 4,
         reps: "6–8",
         note: "Main compound — do this first while shoulders are fresh",
-      },
-      {
-        name: "Front Lateral Raises",
-        sets: 4,
-        reps: "15–20",
-        note: "Dumbbells or plate — targets front delt, control the negative",
       },
       {
         name: "Cable Lateral Raise",
@@ -126,10 +151,22 @@ const workoutDays = [
         note: "D-bar attachment · wrap wrist wrap around bar as padding · unilateral each side",
       },
       {
+        name: "DB Lateral Raise / Lateral Raise Machine",
+        sets: 3,
+        reps: "12–15",
+        note: "Side delt isolation — slight forward lean, lead with elbow, controlled negative · superset with cable raises if pressed for time",
+      },
+      {
         name: "Rear Delt Fly / Reverse Pec Deck",
         sets: 3,
         reps: "15",
         note: "Finish delts before moving to arms",
+      },
+      {
+        name: "Pec Deck / Cable Fly",
+        sets: 3,
+        reps: "12–15",
+        note: "Chest isolation — squeeze hard at peak contraction · takes advantage of the incline press warm-up earlier",
       },
       {
         name: "EZ Bar Curl",
@@ -144,7 +181,7 @@ const workoutDays = [
         note: "EZ bar or DB — locks out the arm so no cheating, great bicep isolation",
       },
       {
-        name: "Tricep Pushdown (lifting strap)",
+        name: "Tricep Pushdown / Tricep Press",
         sets: 3,
         reps: "12–15",
         note: "Loop strap over cable hook, grip both ends",
@@ -157,7 +194,7 @@ const workoutDays = [
     title: "Legs",
     subtitle: "Quads · Hamstrings · Glutes · Calves",
     color: "#D97706",
-    time: "~70 min",
+    time: "~80 min",
     exercises: [
       {
         name: "Barbell Back Squat",
@@ -196,6 +233,12 @@ const workoutDays = [
         note: "Always last — full stretch at bottom, slow negatives",
       },
       {
+        name: "Cable Forearm Curl",
+        sets: 3,
+        reps: "15–20",
+        note: "Straight bar on low cable · overhand grip for reverse curls · grip already warmed up from all the leg work · light weight, squeeze at top",
+      },
+      {
         name: "Decline Bench Crunch",
         sets: 3,
         reps: "15–20",
@@ -208,13 +251,106 @@ const workoutDays = [
 const tips = [
   "Rest 2–3 min between heavy compound sets, 60–90 sec on isolation work",
   "Progressive overload — add weight or reps each week when possible",
-  "Example schedule: Mon (Push) · Tue (Pull) · Thu (Shoulders/Arms) · Sat (Legs)",
   "Warm up 5–10 min before lifting — light cardio + dynamic stretching",
 ];
 
 export default function WorkoutPlan() {
   const [activeDay, setActiveDay] = useState(0);
-  const [checked, setChecked] = useState({});
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+
+  // Timer state for the current activeDay
+  const [timerState, setTimerState] = useState<{
+    isRunning: boolean;
+    startTime: number | null;
+    accumulatedMs: number;
+  }>({ isRunning: false, startTime: null, accumulatedMs: 0 });
+
+  const [displayTimeMs, setDisplayTimeMs] = useState(0);
+
+  // Sync state with localStorage whenever activeDay changes
+  useEffect(() => {
+    const saved = localStorage.getItem(`workout_timer_${activeDay}`);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setTimerState(parsed);
+      } catch (e) {
+        setTimerState({ isRunning: false, startTime: null, accumulatedMs: 0 });
+      }
+    } else {
+      setTimerState({ isRunning: false, startTime: null, accumulatedMs: 0 });
+    }
+  }, [activeDay]);
+
+  const saveTimerState = (dayId: number, state: typeof timerState) => {
+    localStorage.setItem(`workout_timer_${dayId}`, JSON.stringify(state));
+    setTimerState(state);
+  };
+
+  // Timer tick effect
+  useEffect(() => {
+    const calculateCurrentTime = () => {
+      if (timerState.isRunning && timerState.startTime) {
+        return timerState.accumulatedMs + (Date.now() - timerState.startTime);
+      }
+      return timerState.accumulatedMs;
+    };
+
+    setDisplayTimeMs(calculateCurrentTime());
+
+    if (!timerState.isRunning) return;
+
+    const interval = setInterval(() => {
+      setDisplayTimeMs(calculateCurrentTime());
+    }, 200);
+
+    return () => clearInterval(interval);
+  }, [timerState]);
+
+  const startTimer = () => {
+    const newState = {
+      isRunning: true,
+      startTime: Date.now(),
+      accumulatedMs: timerState.accumulatedMs,
+    };
+    saveTimerState(activeDay, newState);
+  };
+
+  const pauseTimer = () => {
+    if (!timerState.isRunning || !timerState.startTime) return;
+    const elapsed = Date.now() - timerState.startTime;
+    const newState = {
+      isRunning: false,
+      startTime: null,
+      accumulatedMs: timerState.accumulatedMs + elapsed,
+    };
+    saveTimerState(activeDay, newState);
+  };
+
+  const resetTimer = () => {
+    if (window.confirm("Are you sure you want to reset the timer for this workout?")) {
+      const newState = {
+        isRunning: false,
+        startTime: null,
+        accumulatedMs: 0,
+      };
+      saveTimerState(activeDay, newState);
+    }
+  };
+
+  const formatTime = (ms: number) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const pad = (num: number) => String(num).padStart(2, "0");
+
+    if (hours > 0) {
+      return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    }
+    return `${pad(minutes)}:${pad(seconds)}`;
+  };
 
   const day = workoutDays[activeDay];
   const doneCount = day.exercises.filter(
@@ -222,7 +358,7 @@ export default function WorkoutPlan() {
   ).length;
   const progress = (doneCount / day.exercises.length) * 100;
 
-  const toggleCheck = (key) =>
+  const toggleCheck = (key: string) =>
     setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
 
   return (
@@ -257,7 +393,7 @@ export default function WorkoutPlan() {
             lineHeight: 1.1,
           }}
         >
-          Workout Plan
+          Marius's Workout Plan
         </div>
       </div>
 
@@ -363,6 +499,169 @@ export default function WorkoutPlan() {
               transition: "width 0.3s ease",
             }}
           />
+        </div>
+
+        {/* Style block for global resets and animations */}
+        <style>{`
+          html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #0f0f0f;
+          }
+          @keyframes timer-pulse {
+            0% { opacity: 0.3; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.1); }
+            100% { opacity: 0.3; transform: scale(0.9); }
+          }
+        `}</style>
+
+        {/* Timer Control Widget */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: "#161616",
+            border: "1px solid #222",
+            borderRadius: 8,
+            padding: "14px 18px",
+            marginBottom: 24,
+            boxShadow: timerState.isRunning
+              ? `0 0 15px ${day.color}15`
+              : "none",
+            transition: "all 0.3s ease",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: timerState.isRunning ? day.color : "#444",
+                boxShadow: timerState.isRunning
+                  ? `0 0 8px ${day.color}`
+                  : "none",
+                animation: timerState.isRunning
+                  ? "timer-pulse 2s infinite ease-in-out"
+                  : "none",
+              }}
+            />
+            <div>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: timerState.isRunning ? day.color : "#555",
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  marginBottom: 2,
+                }}
+              >
+                {timerState.isRunning ? "Active Workout Timer" : "Workout Timer"}
+              </div>
+              <div
+                style={{
+                  fontSize: 22,
+                  fontWeight: 700,
+                  fontFamily: "monospace",
+                  color: timerState.isRunning || displayTimeMs > 0 ? "#fff" : "#666",
+                  lineHeight: 1,
+                }}
+              >
+                {formatTime(displayTimeMs)}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 8 }}>
+            {!timerState.isRunning && displayTimeMs === 0 && (
+              <button
+                onClick={startTimer}
+                style={{
+                  background: day.color,
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 6,
+                  padding: "8px 16px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  transition: "opacity 0.2s",
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.opacity = "0.9")}
+                onMouseOut={(e) => (e.currentTarget.style.opacity = "1")}
+              >
+                Start Workout
+              </button>
+            )}
+            {timerState.isRunning && (
+              <button
+                onClick={pauseTimer}
+                style={{
+                  background: "#333",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 6,
+                  padding: "8px 16px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  transition: "background 0.2s",
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.background = "#444")}
+                onMouseOut={(e) => (e.currentTarget.style.background = "#333")}
+              >
+                Pause
+              </button>
+            )}
+            {!timerState.isRunning && displayTimeMs > 0 && (
+              <button
+                onClick={startTimer}
+                style={{
+                  background: day.color,
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 6,
+                  padding: "8px 16px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  transition: "opacity 0.2s",
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.opacity = "0.9")}
+                onMouseOut={(e) => (e.currentTarget.style.opacity = "1")}
+              >
+                Resume
+              </button>
+            )}
+            {displayTimeMs > 0 && (
+              <button
+                onClick={resetTimer}
+                style={{
+                  background: "transparent",
+                  color: "#ff4d4d",
+                  border: "1px solid #ff4d4d22",
+                  borderRadius: 6,
+                  padding: "8px 16px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = "#ff4d4d15";
+                  e.currentTarget.style.borderColor = "#ff4d4d";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.borderColor = "#ff4d4d22";
+                }}
+              >
+                Reset
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
