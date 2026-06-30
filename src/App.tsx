@@ -393,7 +393,7 @@ export default function WorkoutPlan() {
             lineHeight: 1.1,
           }}
         >
-          Marius's Workout Plan
+          Marius's Workout Plan v2
         </div>
       </div>
 
