@@ -7,7 +7,7 @@ const workoutDays = [
     title: "Push",
     subtitle: "Chest + Triceps",
     color: "#E84040",
-    time: "~90 min",
+    time: "~75 min",
     exercises: [
       {
         name: "Barbell Bench Press",
@@ -50,18 +50,6 @@ const workoutDays = [
         sets: 3,
         reps: "12",
         note: "D-bar attachment · unilateral each side · side delt finisher to cap off the session",
-      },
-      {
-        name: "Chest Supported DB Row",
-        sets: 3,
-        reps: "8",
-        note: "Chest on incline bench · elbows drive back, full stretch at bottom · great back finisher on push day for balance",
-      },
-      {
-        name: "Bulgarian Split Squat",
-        sets: 3,
-        reps: "8",
-        note: "Dumbbells or barbell · rear foot elevated on bench · exposes left-right imbalances · go lighter than you think, focus on depth and control",
       },
     ],
   },
@@ -243,6 +231,40 @@ const workoutDays = [
         sets: 3,
         reps: "15",
         note: "Feet hooked on decline bench — full range, slow and controlled",
+      },
+    ],
+  },
+  {
+    id: 5,
+    label: "DAY 5",
+    title: "Home",
+    subtitle: "Dumbbells + Bodyweight",
+    color: "#7C3AED",
+    time: "~50 min",
+    exercises: [
+      {
+        name: "Bulgarian Split Squat",
+        sets: 4,
+        reps: "8",
+        note: "Dumbbells or bodyweight \u00b7 rear foot on chair or couch \u00b7 full depth, controlled negative \u00b7 expose any left-right imbalance",
+      },
+      {
+        name: "Chest Supported DB Row",
+        sets: 4,
+        reps: "8",
+        note: "Chest on incline bench or angled chair \u00b7 elbows drive back \u00b7 full stretch at bottom \u00b7 squeeze hard at top",
+      },
+      {
+        name: "DB Lateral Raise",
+        sets: 3,
+        reps: "12",
+        note: "Light dumbbells \u00b7 lead with elbow, slight forward lean \u00b7 controlled negative",
+      },
+      {
+        name: "Rope Jumps",
+        sets: 3,
+        reps: "15",
+        note: "Cardio finisher · stay light on your feet, consistent rhythm · 60 sec rest between sets",
       },
     ],
   },
